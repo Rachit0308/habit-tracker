@@ -15,14 +15,23 @@ const colorThemes = [
 function App() {
   const [onboarded, setOnboarded] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(0);
-  const [onboardingData, setOnboardingData] = useState({});
+  const [onboardingData, setOnboardingData] = useState({ name: 'Rachit' });
   const [themeName, setThemeName] = useState('light');
   const [showSummary, setShowSummary] = useState(false);
 
-  // Reset logs and suggestions state for a clean start
-  const [moodLogs, setMoodLogs] = useState([]);
-  const [activityLogs, setActivityLogs] = useState([]);
-  const [suggestionHistory, setSuggestionHistory] = useState([]);
+  // Sample data for logs and suggestions
+  const [moodLogs, setMoodLogs] = useState([
+    { mood: 'Good', emoji: '🙂', note: 'Feeling productive this morning!', timestamp: new Date().setHours(9, 30) },
+    { mood: 'Okay', emoji: '😐', note: 'A bit tired after lunch.', timestamp: new Date().setHours(13, 15) },
+  ]);
+  const [activityLogs, setActivityLogs] = useState([
+    { activity: 'Work', timeSpent: 180, timestamp: new Date().setHours(9, 0) },
+    { activity: 'Reading', timeSpent: 30, timestamp: new Date().setHours(12, 30) },
+    { activity: 'Exercise', timeSpent: 60, timestamp: new Date().setHours(17, 0) },
+  ]);
+  const [suggestionHistory, setSuggestionHistory] = useState([
+    { tip: "Take a 5-minute walk to refresh your mind.", timestamp: new Date().setHours(11, 0) }
+  ]);
 
   const theme = useMemo(() => {
     const selected = colorThemes.find(t => t.value === themeName) || colorThemes[0];
