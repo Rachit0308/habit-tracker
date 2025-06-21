@@ -2,6 +2,8 @@ import React, { useState, useMemo } from 'react';
 import './App.css';
 import Onboarding from './Onboarding';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
+import Dashboard from './Dashboard';
+import DailySummary from './DailySummary';
 
 const colorThemes = [
   { name: 'Light', value: 'light', primary: '#1976d2', secondary: '#9c27b0' },
@@ -11,10 +13,25 @@ const colorThemes = [
 ];
 
 function App() {
-  const [onboarded, setOnboarded] = useState(false);
+  const [onboarded, setOnboarded] = useState(true); // Default to true to show summary
   const [onboardingStep, setOnboardingStep] = useState(0);
-  const [onboardingData, setOnboardingData] = useState({});
+  const [onboardingData, setOnboardingData] = useState({ name: 'Rachit' }); // Sample user
   const [themeName, setThemeName] = useState('light');
+  const [showSummary, setShowSummary] = useState(true); // Default to true
+
+  // Sample data for logs and suggestions
+  const [moodLogs, setMoodLogs] = useState([
+    { mood: 'Good', emoji: '🙂', note: 'Feeling productive this morning!', timestamp: new Date().setHours(9, 30) },
+    { mood: 'Okay', emoji: '😐', note: 'A bit tired after lunch.', timestamp: new Date().setHours(13, 15) },
+  ]);
+  const [activityLogs, setActivityLogs] = useState([
+    { activity: 'Work', timeSpent: 180, timestamp: new Date().setHours(9, 0) },
+    { activity: 'Reading', timeSpent: 30, timestamp: new Date().setHours(12, 30) },
+    { activity: 'Exercise', timeSpent: 60, timestamp: new Date().setHours(17, 0) },
+  ]);
+  const [suggestionHistory, setSuggestionHistory] = useState([
+    { tip: "Take a 5-minute walk to refresh your mind.", timestamp: new Date().setHours(11, 0) }
+  ]);
 
   const theme = useMemo(() => {
     const selected = colorThemes.find(t => t.value === themeName) || colorThemes[0];
@@ -54,10 +71,27 @@ function App() {
             themeName={themeName}
             setThemeName={setThemeName}
           />
+        ) : showSummary ? (
+          <DailySummary
+            user={onboardingData}
+            moodLogs={moodLogs}
+            activityLogs={activityLogs}
+            suggestionHistory={suggestionHistory}
+            onBack={() => setShowSummary(false)}
+          />
         ) : (
-          <div>
-            <h2>Dashboard (Coming Soon)</h2>
-          </div>
+          <Dashboard
+            user={onboardingData}
+            themeName={themeName}
+            setThemeName={setThemeName}
+            onShowSummary={() => setShowSummary(true)}
+            setMoodLogs={setMoodLogs}
+            setActivityLogs={setActivityLogs}
+            setSuggestionHistory={setSuggestionHistory}
+            moodLogs={moodLogs}
+            activityLogs={activityLogs}
+            suggestionHistory={suggestionHistory}
+          />
         )}
       </div>
     </ThemeProvider>
