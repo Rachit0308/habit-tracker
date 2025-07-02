@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -12,8 +12,16 @@ import Select from '@mui/material/Select';
 import InputLabel from '@mui/material/InputLabel';
 import FormControl from '@mui/material/FormControl';
 import Slider from '@mui/material/Slider';
+import { createActivity, API_BASE } from './api';
 
-const defaultActivities = [
+function getAuthHeaders() {
+  const token = localStorage.getItem('jwt_token');
+  const expires = localStorage.getItem('jwt_token_expires');
+  if (!token || !expires || Date.now() > Number(expires)) return {};
+  return { Authorization: `Bearer ${token}` };
+}
+
+const fallbackActivities = [
   'Reading',
   'Cooking',
   'Scrolling',
@@ -22,13 +30,40 @@ const defaultActivities = [
   'Relaxation',
 ];
 
-function ActivityModal({ open, onClose }) {
+function ActivityModal({ open, onClose, userId, onActivityLogged }) {
+  const [activities, setActivities] = useState(fallbackActivities);
   const [activity, setActivity] = useState('');
   const [customActivity, setCustomActivity] = useState('');
   const [timeSpent, setTimeSpent] = useState(30);
+  const [loading, setLoading] = useState(false);
+  const [activitiesLoading, setActivitiesLoading] = useState(false);
 
-  const handleSave = () => {
-    // Save activity, customActivity, and timeSpent (to be implemented)
+  useEffect(() => {
+    if (!open) return;
+    setActivitiesLoading(true);
+    fetch(`${API_BASE}/activities/master`, { headers: getAuthHeaders() })
+      .then(res => res.json())
+      .then(list => {
+        if (Array.isArray(list) && list.length) {
+          setActivities(list);
+        }
+        setActivitiesLoading(false);
+      })
+      .catch(() => setActivitiesLoading(false));
+  }, [open]);
+
+  const handleSave = async () => {
+    if (!activity || (activity === 'custom' && !customActivity)) return;
+    setLoading(true);
+    const data = {
+      userId,
+      activity,
+      customActivity: activity === 'custom' ? customActivity : '',
+      timeSpent,
+    };
+    const saved = await createActivity(data);
+    setLoading(false);
+    if (onActivityLogged) onActivityLogged(saved);
     onClose();
   };
 
@@ -39,17 +74,21 @@ function ActivityModal({ open, onClose }) {
         <Box mb={2}>
           <FormControl fullWidth>
             <InputLabel id="activity-label">Activity</InputLabel>
-            <Select
-              labelId="activity-label"
-              value={activity}
-              label="Activity"
-              onChange={e => setActivity(e.target.value)}
-            >
-              {defaultActivities.map((act) => (
-                <MenuItem key={act} value={act}>{act}</MenuItem>
-              ))}
-              <MenuItem value="custom">Custom...</MenuItem>
-            </Select>
+            {activitiesLoading ? (
+              <Box my={2} textAlign="center">Loading activities...</Box>
+            ) : (
+              <Select
+                labelId="activity-label"
+                value={activity}
+                label="Activity"
+                onChange={e => setActivity(e.target.value)}
+              >
+                {activities.map((act) => (
+                  <MenuItem key={act} value={act}>{act}</MenuItem>
+                ))}
+                <MenuItem value="custom">Custom...</MenuItem>
+              </Select>
+            )}
           </FormControl>
         </Box>
         {activity === 'custom' && (
@@ -80,9 +119,9 @@ function ActivityModal({ open, onClose }) {
           onClick={handleSave}
           color="primary"
           variant="contained"
-          disabled={!(activity && (activity !== 'custom' || customActivity))}
+          disabled={!(activity && (activity !== 'custom' || customActivity)) || loading}
         >
-          Save
+          {loading ? 'Saving...' : 'Save'}
         </Button>
       </DialogActions>
     </Dialog>

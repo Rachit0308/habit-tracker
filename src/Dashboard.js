@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
@@ -13,14 +13,44 @@ import EventNoteIcon from '@mui/icons-material/EventNote';
 import MoodModal from './MoodModal';
 import ActivityModal from './ActivityModal';
 import SuggestionModal from './SuggestionModal';
+import { getSuggestions } from './api';
 
 function Dashboard({ user, themeName, setThemeName, onShowSummary }) {
   const name = user.name || 'there';
-  // Placeholder for LLM-generated tip
-  const suggestion = "Take a 5-minute walk to refresh your mind!";
+  const userId = user.id;
   const [showMoodModal, setShowMoodModal] = useState(false);
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [showSuggestionModal, setShowSuggestionModal] = useState(false);
+  const [latestSuggestion, setLatestSuggestion] = useState('');
+  const [suggestionLoading, setSuggestionLoading] = useState(false);
+  const [activityLogs, setActivityLogs] = useState([]);
+  const [moodLogs, setMoodLogs] = useState([]);
+  const [suggestionHistory, setSuggestionHistory] = useState([]);
+
+  // Fetch latest suggestion on mount
+  useEffect(() => {
+    if (!userId) return;
+    setSuggestionLoading(true);
+    getSuggestions(userId)
+      .then(suggestions => {
+        setLatestSuggestion(suggestions[0]?.text || 'No suggestions yet.');
+        setSuggestionHistory(suggestions);
+      })
+      .catch(() => setLatestSuggestion('No suggestions yet.'))
+      .finally(() => setSuggestionLoading(false));
+  }, [userId]);
+
+  // Callbacks for modals
+  const handleActivityLogged = (activity) => {
+    setActivityLogs(logs => [...logs, activity]);
+  };
+  const handleMoodLogged = (mood) => {
+    setMoodLogs(logs => [...logs, mood]);
+  };
+  const handleSuggestionLogged = (suggestions) => {
+    setSuggestionHistory(suggestions);
+    setLatestSuggestion(suggestions[0]?.text || 'No suggestions yet.');
+  };
 
   return (
     <Container style={{ maxWidth: 480, padding: 0, minHeight: '100vh', background: '#f8f9fa' }} className="py-4">
@@ -56,16 +86,16 @@ function Dashboard({ user, themeName, setThemeName, onShowSummary }) {
           <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center">
             <LightbulbIcon color="warning" sx={{ fontSize: 32, mb: 1 }} />
             <Typography variant="subtitle1" sx={{ textAlign: 'center', fontWeight: 500 }}>Today's Suggestion</Typography>
-            <Typography variant="body2" sx={{ textAlign: 'center' }}>{suggestion}</Typography>
+            <Typography variant="body2" sx={{ textAlign: 'center' }}>{suggestionLoading ? 'Loading...' : latestSuggestion}</Typography>
           </Box>
         </CardContent>
       </Card>
       <Button variant="contained" color="primary" fullWidth sx={{ py: 1.5, fontWeight: 600 }} onClick={onShowSummary}>
         View Summary
       </Button>
-      <MoodModal open={showMoodModal} onClose={() => setShowMoodModal(false)} />
-      <ActivityModal open={showActivityModal} onClose={() => setShowActivityModal(false)} />
-      <SuggestionModal open={showSuggestionModal} onClose={() => setShowSuggestionModal(false)} />
+      <MoodModal open={showMoodModal} onClose={() => setShowMoodModal(false)} userId={userId} onMoodLogged={handleMoodLogged} />
+      <ActivityModal open={showActivityModal} onClose={() => setShowActivityModal(false)} userId={userId} onActivityLogged={handleActivityLogged} />
+      <SuggestionModal open={showSuggestionModal} onClose={() => setShowSuggestionModal(false)} userId={userId} onSuggestionLogged={handleSuggestionLogged} />
     </Container>
   );
 }

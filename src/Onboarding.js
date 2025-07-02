@@ -11,6 +11,7 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import { useTheme } from '@mui/material/styles';
+import { createOrUpdateUser } from './api';
 
 const steps = [
   'Welcome',
@@ -27,6 +28,15 @@ const colorThemes = [
   { name: 'Dark', value: 'dark', primary: '#212121', secondary: '#ff4081' },
   { name: 'Green', value: 'green', primary: '#388e3c', secondary: '#cddc39' },
   { name: 'Orange', value: 'orange', primary: '#ff9800', secondary: '#ff5722' },
+];
+
+const countryCodes = [
+  { code: '+1', label: 'US/Canada' },
+  { code: '+91', label: 'India' },
+  { code: '+44', label: 'UK' },
+  { code: '+61', label: 'Australia' },
+  { code: '+92', label: 'Pakistan' },
+  // Add more as needed
 ];
 
 function ThemeSelector({ theme, setTheme }) {
@@ -63,20 +73,28 @@ function WelcomeStep({ onNext }) {
 
 function NameStep({ data, onNext, onBack }) {
   const [name, setName] = useState(data.name || '');
+  const [email, setEmail] = useState(data.email || '');
   return (
     <Container className="Onboarding-step p-4" style={{ maxWidth: 400 }}>
-      <h2 className="mb-3">What's your name?</h2>
+      <h2 className="mb-3">Let's get to know you</h2>
       <TextField
-        label="Name (optional)"
+        label="Name"
         value={name}
         onChange={e => setName(e.target.value)}
         fullWidth
         className="mb-3"
       />
+      <TextField
+        label="Email"
+        value={email}
+        onChange={e => setEmail(e.target.value)}
+        fullWidth
+        className="mb-3"
+        type="email"
+      />
       <Row className="mt-3">
         <Col><Button variant="outlined" onClick={onBack} fullWidth>Back</Button></Col>
-        <Col><Button variant="contained" onClick={() => onNext({ name })} fullWidth>Next</Button></Col>
-        <Col><Button variant="text" onClick={() => onNext({})} fullWidth>Skip</Button></Col>
+        <Col><Button variant="contained" onClick={() => onNext({ name, email })} fullWidth disabled={!name || !email}>Next</Button></Col>
       </Row>
     </Container>
   );
@@ -213,31 +231,123 @@ function SuccessStep({ onFinish }) {
   );
 }
 
-function Onboarding({ step, data, onNext, onBack, onFinish, themeName, setThemeName }) {
+function Onboarding({ data, onFinish }) {
+  const [step, setStep] = useState(0);
+  const [name, setName] = useState(data.name || '');
+  const [countryCode, setCountryCode] = useState('+1');
+  const [mobile, setMobile] = useState('');
+  const [otp, setOtp] = useState('');
+  const [otpError, setOtpError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  if (step === 0) {
+    return (
+      <Container className="Onboarding-step text-center p-4" style={{ maxWidth: 400 }}>
+        <h1 className="mb-3">Welcome to Habit Tracker!</h1>
+        <p className="mb-4">Track your habits, moods, and build a better you.</p>
+        <Button variant="contained" size="large" onClick={() => setStep(1)} fullWidth>Get Started</Button>
+      </Container>
+    );
+  }
+
+  if (step === 1) {
+    return (
+      <Container className="Onboarding-step p-4" style={{ maxWidth: 400 }}>
+        <h2 className="mb-3">Let's get to know you</h2>
+        <TextField
+          label="Name"
+          value={name}
+          onChange={e => setName(e.target.value)}
+          fullWidth
+          className="mb-3"
+        />
+        <Row className="mb-3">
+          <Col xs={5}>
+            <TextField
+              select
+              label="Code"
+              value={countryCode}
+              onChange={e => setCountryCode(e.target.value)}
+              fullWidth
+            >
+              {countryCodes.map((c) => (
+                <MenuItem key={c.code} value={c.code}>{c.code} ({c.label})</MenuItem>
+              ))}
+            </TextField>
+          </Col>
+          <Col xs={7}>
+            <TextField
+              label="Mobile Number"
+              value={mobile}
+              onChange={e => setMobile(e.target.value.replace(/\D/g, ''))}
+              fullWidth
+              inputProps={{ maxLength: 15 }}
+            />
+          </Col>
+        </Row>
+        <Row className="mt-3">
+          <Col>
+            <Button
+              variant="contained"
+              onClick={() => setStep(2)}
+              fullWidth
+              disabled={!name || !mobile}
+            >
+              Continue
+            </Button>
+          </Col>
+        </Row>
+      </Container>
+    );
+  }
+
+  // Step 2: OTP
   return (
-    <div style={{ minHeight: '100vh', background: '#f8f9fa', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-      <ThemeSelector theme={themeName} setTheme={setThemeName} />
-      {(() => {
-        switch (steps[step]) {
-          case 'Welcome':
-            return <WelcomeStep onNext={onNext} />;
-          case 'Name':
-            return <NameStep data={data} onNext={onNext} onBack={onBack} />;
-          case 'Goal':
-            return <GoalStep data={data} onNext={onNext} onBack={onBack} />;
-          case 'TrackingStyle':
-            return <TrackingStyleStep data={data} onNext={onNext} onBack={onBack} />;
-          case 'PresetActivities':
-            return <PresetActivitiesStep data={data} onNext={onNext} onBack={onBack} />;
-          case 'Notifications':
-            return <NotificationsStep data={data} onNext={onNext} onBack={onBack} />;
-          case 'Success':
-            return <SuccessStep onFinish={onFinish} />;
-          default:
-            return null;
-        }
-      })()}
-    </div>
+    <Container className="Onboarding-step p-4" style={{ maxWidth: 400 }}>
+      <h2 className="mb-3">Enter OTP</h2>
+      <p className="mb-3">Enter the 4-digit code sent to your mobile</p>
+      <TextField
+        label="OTP"
+        value={otp}
+        onChange={e => {
+          setOtp(e.target.value.replace(/\D/g, '').slice(0, 4));
+          setOtpError('');
+        }}
+        fullWidth
+        inputProps={{ maxLength: 4 }}
+        error={!!otpError}
+        helperText={otpError}
+      />
+      <Row className="mt-3">
+        <Col>
+          <Button
+            variant="contained"
+            onClick={async () => {
+              if (otp === '0308') {
+                setLoading(true);
+                try {
+                  const { user, token } = await createOrUpdateUser({ name, mobile: countryCode + mobile });
+                  // Save token to localStorage with expiry
+                  const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
+                  localStorage.setItem('jwt_token', token);
+                  localStorage.setItem('jwt_token_expires', expiresAt);
+                  onFinish(user);
+                } catch (e) {
+                  setOtpError('Failed to save user.');
+                }
+                setLoading(false);
+              } else {
+                setOtpError('Invalid OTP. Try 0308.');
+              }
+            }}
+            fullWidth
+            disabled={otp.length !== 4 || loading}
+          >
+            {loading ? 'Saving...' : 'Verify & Continue'}
+          </Button>
+        </Col>
+      </Row>
+    </Container>
   );
 }
 

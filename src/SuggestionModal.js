@@ -1,54 +1,57 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
-import LightbulbIcon from '@mui/icons-material/Lightbulb';
-import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+import { getSuggestions } from './api';
 
-const suggestions = [
-  "Try a 5-minute walk to refresh your mind.",
-  "Write down one thing you're grateful for today.",
-  "Take a deep breath and stretch for a moment.",
-  "Read a page from a book you enjoy.",
-  "Drink a glass of water and hydrate yourself.",
-  "Step outside and notice something new in your surroundings.",
-];
+function SuggestionModal({ open, onClose, userId }) {
+  const [suggestions, setSuggestions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-function getRandomSuggestion(current) {
-  let filtered = suggestions.filter(s => s !== current);
-  return filtered[Math.floor(Math.random() * filtered.length)] || suggestions[0];
-}
-
-function SuggestionModal({ open, onClose }) {
-  const [tip, setTip] = useState(suggestions[0]);
-
-  const handleReroll = () => {
-    setTip(getRandomSuggestion(tip));
+  const fetchSuggestions = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getSuggestions(userId);
+      setSuggestions(data);
+    } catch (e) {
+      setError('Failed to load suggestions');
+    }
+    setLoading(false);
   };
+
+  useEffect(() => {
+    if (open) fetchSuggestions();
+  }, [open]);
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
-      <DialogTitle sx={{ textAlign: 'center' }}>Today's Insight</DialogTitle>
+      <DialogTitle sx={{ textAlign: 'center' }}>Suggestions</DialogTitle>
       <DialogContent>
-        <Card variant="outlined" sx={{ background: '#fffbe6', mb: 2 }}>
-          <CardContent>
-            <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center">
-              <LightbulbIcon color="warning" sx={{ fontSize: 32, mb: 1 }} />
-              <Typography variant="body1" sx={{ textAlign: 'center', fontWeight: 500, mb: 1 }}>
-                {tip}
-              </Typography>
-            </Box>
-          </CardContent>
-        </Card>
+        {loading ? (
+          <CircularProgress sx={{ display: 'block', mx: 'auto', my: 3 }} />
+        ) : error ? (
+          <Typography color="error">{error}</Typography>
+        ) : (
+          <>
+            {suggestions.length === 0 ? (
+              <Typography>No suggestions for now.</Typography>
+            ) : (
+              suggestions.map((s, i) => (
+                <Typography key={i} sx={{ mb: 2 }}>{s.text || s}</Typography>
+              ))
+            )}
+          </>
+        )}
       </DialogContent>
       <DialogActions sx={{ justifyContent: 'center', pb: 2 }}>
-        <Button onClick={handleReroll} color="primary" variant="outlined">Suggest Again</Button>
-        <Button onClick={onClose} color="primary" variant="contained">Close</Button>
+        <Button onClick={fetchSuggestions} color="primary" variant="outlined" disabled={loading}>Reroll</Button>
+        <Button onClick={onClose} color="secondary" variant="text">Close</Button>
       </DialogActions>
     </Dialog>
   );

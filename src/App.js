@@ -1,9 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import './App.css';
 import Onboarding from './Onboarding';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import Dashboard from './Dashboard';
 import DailySummary from './DailySummary';
+import { format } from 'date-fns';
+import { jwtDecode } from 'jwt-decode';
 
 const colorThemes = [
   { name: 'Light', value: 'light', primary: '#1976d2', secondary: '#9c27b0' },
@@ -12,12 +14,36 @@ const colorThemes = [
   { name: 'Orange', value: 'orange', primary: '#ff9800', secondary: '#ff5722' },
 ];
 
+const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:4000/api';
+
+function getStoredUser() {
+  const token = localStorage.getItem('jwt_token');
+  const expires = localStorage.getItem('jwt_token_expires');
+  if (!token || !expires || Date.now() > Number(expires)) return null;
+  try {
+    const user = jwtDecode(token);
+    return { ...user, token };
+  } catch {
+    return null;
+  }
+}
+
 function App() {
   const [onboarded, setOnboarded] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(0);
-  const [onboardingData, setOnboardingData] = useState({ name: 'Rachit' });
+  const [onboardingData, setOnboardingData] = useState({});
   const [themeName, setThemeName] = useState('light');
   const [showSummary, setShowSummary] = useState(false);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const stored = getStoredUser();
+    if (stored) {
+      setUser(stored);
+      setOnboarded(true);
+      setOnboardingData(stored);
+    }
+  }, []);
 
   // Sample data for logs and suggestions
   const [moodLogs, setMoodLogs] = useState([
@@ -55,6 +81,7 @@ function App() {
 
   const handleFinish = (data) => {
     setOnboardingData((prev) => ({ ...prev, ...data }));
+    setUser({ ...data });
     setOnboarded(true);
   };
 
@@ -73,24 +100,16 @@ function App() {
           />
         ) : showSummary ? (
           <DailySummary
-            user={onboardingData}
-            moodLogs={moodLogs}
-            activityLogs={activityLogs}
-            suggestionHistory={suggestionHistory}
+            userId={user?.id}
+            date={format(new Date(), 'yyyy-MM-dd')}
             onBack={() => setShowSummary(false)}
           />
         ) : (
           <Dashboard
-            user={onboardingData}
+            user={user}
             themeName={themeName}
             setThemeName={setThemeName}
             onShowSummary={() => setShowSummary(true)}
-            setMoodLogs={setMoodLogs}
-            setActivityLogs={setActivityLogs}
-            setSuggestionHistory={setSuggestionHistory}
-            moodLogs={moodLogs}
-            activityLogs={activityLogs}
-            suggestionHistory={suggestionHistory}
           />
         )}
       </div>
