@@ -14,7 +14,7 @@ const colorThemes = [
   { name: 'Orange', value: 'orange', primary: '#ff9800', secondary: '#ff5722' },
 ];
 
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:4000/api';
+const API_BASE = process.env.REACT_APP_API_BASE || 'https://habit-tracker-api-g5pq.onrender.com/api';
 
 function getStoredUser() {
   const token = localStorage.getItem('jwt_token');
