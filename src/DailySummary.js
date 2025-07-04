@@ -42,8 +42,8 @@ function DailySummary({ userId, date, onBack }) {
   if (error) return <Typography color="error">{error}</Typography>;
   if (!summary) return null;
 
-  // Mood of the day: last mood log
-  const moodOfDay = summary.moodLogs.length > 0 ? summary.moodLogs[summary.moodLogs.length - 1] : null;
+  // Mood of the day: first mood log (when the day began)
+  const moodOfDay = summary.moodLogs.length > 0 ? summary.moodLogs[0] : null;
   // Build a timeline of the day: mood, activities in chronological order
   const events = [
     ...(summary.moodLogs || []).map(m => ({ type: 'mood', ...m })),
@@ -82,7 +82,7 @@ function DailySummary({ userId, date, onBack }) {
           )}
         </CardContent>
       </Card>
-      <Timeline position="right" sx={{ mb: 3 }}>
+      <Timeline position="alternate" sx={{ mb: 3 }}>
         {events.length === 0 && (
           <TimelineItem>
             <TimelineSeparator>
