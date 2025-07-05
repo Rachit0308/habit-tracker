@@ -13,6 +13,7 @@ import InputLabel from '@mui/material/InputLabel';
 import FormControl from '@mui/material/FormControl';
 import Slider from '@mui/material/Slider';
 import { createActivity, API_BASE } from './api';
+import dayjs from 'dayjs';
 
 function getAuthHeaders() {
   const token = localStorage.getItem('jwt_token');
@@ -37,6 +38,10 @@ function ActivityModal({ open, onClose, userId, onActivityLogged }) {
   const [timeSpent, setTimeSpent] = useState(30);
   const [loading, setLoading] = useState(false);
   const [activitiesLoading, setActivitiesLoading] = useState(false);
+  const [activityTime, setActivityTime] = useState(() => {
+    const now = new Date();
+    return now.toTimeString().slice(0,5); // 'HH:MM'
+  });
 
   useEffect(() => {
     if (!open) return;
@@ -52,14 +57,24 @@ function ActivityModal({ open, onClose, userId, onActivityLogged }) {
       .catch(() => setActivitiesLoading(false));
   }, [open]);
 
+  useEffect(() => {
+    if (open) {
+      const now = new Date();
+      setActivityTime(now.toTimeString().slice(0,5));
+    }
+  }, [open]);
+
   const handleSave = async () => {
     if (!activity || (activity === 'custom' && !customActivity)) return;
     setLoading(true);
+    const today = dayjs().format('YYYY-MM-DD');
+    const timestamp = dayjs(`${today}T${activityTime}`).toDate().getTime();
     const data = {
       userId,
       activity,
       customActivity: activity === 'custom' ? customActivity : '',
       timeSpent,
+      timestamp,
     };
     const saved = await createActivity(data);
     setLoading(false);
@@ -110,6 +125,16 @@ function ActivityModal({ open, onClose, userId, onActivityLogged }) {
             step={5}
             valueLabelDisplay="auto"
             marks={[{ value: 5, label: '5' }, { value: 60, label: '60' }, { value: 120, label: '120' }, { value: 180, label: '180' }]}
+          />
+        </Box>
+        <Box mb={2}>
+          <TextField
+            label="Time of Activity"
+            type="time"
+            value={activityTime}
+            onChange={e => setActivityTime(e.target.value)}
+            fullWidth
+            inputProps={{ step: 60 }} // 1 min steps
           />
         </Box>
       </DialogContent>

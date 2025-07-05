@@ -82,7 +82,7 @@ function DailySummary({ userId, date, onBack }) {
           )}
         </CardContent>
       </Card>
-      <Timeline position="alternate" sx={{ mb: 3 }}>
+      <Timeline position="right" sx={{ mb: 3 }}>
         {events.length === 0 && (
           <TimelineItem>
             <TimelineSeparator>
