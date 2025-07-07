@@ -37,7 +37,12 @@ function MoodModal({ open, onClose, userId, onMoodLogged }) {
       .then(res => res.json())
       .then(list => {
         if (Array.isArray(list) && list.length && list[0].mood && list[0].emoji) {
-          setMoods(list.map(m => ({ label: m.mood, emoji: m.emoji })));
+          // Sort moods in fixed order
+          const order = ['Great', 'Good', 'Okay', 'Bad', 'Awful'];
+          const sorted = list
+            .map(m => ({ label: m.mood, emoji: m.emoji }))
+            .sort((a, b) => order.indexOf(a.label) - order.indexOf(b.label));
+          setMoods(sorted);
         }
         setMoodsLoading(false);
       })
