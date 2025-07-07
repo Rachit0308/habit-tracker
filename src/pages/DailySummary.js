@@ -6,17 +6,19 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import Timeline from '@mui/lab/Timeline';
-import TimelineItem from '@mui/lab/TimelineItem';
-import TimelineSeparator from '@mui/lab/TimelineSeparator';
-import TimelineConnector from '@mui/lab/TimelineConnector';
-import TimelineContent from '@mui/lab/TimelineContent';
-import TimelineDot from '@mui/lab/TimelineDot';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import Divider from '@mui/material/Divider';
 import MoodIcon from '@mui/icons-material/Mood';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import LightbulbIcon from '@mui/icons-material/Lightbulb';
 import CircularProgress from '@mui/material/CircularProgress';
 import { getDailySummary } from '../api/summary';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 
 function formatTime(ts) {
   const d = new Date(ts);
@@ -27,16 +29,18 @@ function DailySummary({ userId, date, onBack }) {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(new Date(date));
 
   useEffect(() => {
-    if (!userId || !date) return;
+    if (!userId || !selectedDate) return;
     setLoading(true);
     setError(null);
-    getDailySummary(userId, date)
+    const formatted = selectedDate.toISOString().slice(0, 10);
+    getDailySummary(userId, formatted)
       .then(data => setSummary(data))
       .catch(() => setError('Failed to load summary'))
       .finally(() => setLoading(false));
-  }, [userId, date]);
+  }, [userId, selectedDate]);
 
   if (loading) return <CircularProgress sx={{ display: 'block', mx: 'auto', my: 3 }} />;
   if (error) return <Typography color="error">{error}</Typography>;
@@ -55,6 +59,18 @@ function DailySummary({ userId, date, onBack }) {
       <Button startIcon={<ArrowBackIcon />} onClick={onBack} sx={{ mb: 2 }} variant="text">
         Back
       </Button>
+      <LocalizationProvider dateAdapter={AdapterDateFns}>
+        <DatePicker
+          label="Select date"
+          value={selectedDate}
+          onChange={date => {
+            if (date && date <= new Date()) setSelectedDate(date);
+          }}
+          maxDate={new Date()}
+          disableFuture
+          slotProps={{ textField: { fullWidth: true, sx: { mb: 2 } } }}
+        />
+      </LocalizationProvider>
       <Typography variant="h5" className="mb-3" style={{ fontWeight: 700, textAlign: 'center' }}>
         Today's Story
       </Typography>
@@ -82,47 +98,35 @@ function DailySummary({ userId, date, onBack }) {
           )}
         </CardContent>
       </Card>
-      <Timeline position="right" sx={{ mb: 3 }}>
+      <List sx={{ width: '100%', bgcolor: 'background.paper', mb: 3 }}>
         {events.length === 0 && (
-          <TimelineItem>
-            <TimelineSeparator>
-              <TimelineDot color="grey" />
-            </TimelineSeparator>
-            <TimelineContent>
-              <Typography variant="body2" color="text.secondary">No events logged today.</Typography>
-            </TimelineContent>
-          </TimelineItem>
+          <ListItem>
+            <ListItemIcon>
+              <EventNoteIcon color="disabled" />
+            </ListItemIcon>
+            <ListItemText primary="No events logged today." />
+          </ListItem>
         )}
         {events.map((event, i) => (
-          <TimelineItem key={i}>
-            <TimelineSeparator>
-              <TimelineDot color={event.type === 'mood' ? 'primary' : 'secondary'}>
-                {event.type === 'mood' ? <MoodIcon /> : <EventNoteIcon />}
-              </TimelineDot>
-              {i < events.length - 1 && <TimelineConnector />}
-            </TimelineSeparator>
-            <TimelineContent>
-              {event.type === 'mood' && (
-                <Box mb={1}>
-                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                    {summary.user.name ? `${summary.user.name} felt ` : 'You felt '}<span style={{ fontSize: 20 }}>{event.emoji}</span> <b>{event.mood}</b>
-                  </Typography>
-                  {event.note && <Typography variant="body2" color="text.secondary"> "{event.note}"</Typography>}
-                  <Typography variant="caption" color="text.secondary">{formatTime(event.timestamp)}</Typography>
-                </Box>
-              )}
-              {event.type === 'activity' && (
-                <Box mb={1}>
-                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                    {summary.user.name ? `${summary.user.name} spent` : 'You spent'} <b>{event.timeSpent} min</b> on <b>{event.activity === 'custom' ? event.customActivity : event.activity}</b>
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">{formatTime(event.timestamp)}</Typography>
-                </Box>
-              )}
-            </TimelineContent>
-          </TimelineItem>
+          <React.Fragment key={i}>
+            <ListItem alignItems="flex-start">
+              <ListItemIcon>
+                {event.type === 'mood' ? <MoodIcon color="primary" /> : <EventNoteIcon color="secondary" />}
+              </ListItemIcon>
+              <ListItemText
+                primary={event.type === 'mood'
+                  ? (<span>{summary.user.name ? `${summary.user.name} felt ` : 'You felt '}<span style={{ fontSize: 20 }}>{event.emoji}</span> <b>{event.mood}</b></span>)
+                  : (<span>{summary.user.name ? `${summary.user.name} spent` : 'You spent'} <b>{event.timeSpent} min</b> on <b>{event.activity === 'custom' ? event.customActivity : event.activity}</b></span>)}
+                secondary={event.type === 'mood' && event.note ? `"${event.note}"` : null}
+              />
+              <Typography variant="caption" color="text.secondary" sx={{ minWidth: 60, textAlign: 'right' }}>
+                {formatTime(event.timestamp)}
+              </Typography>
+            </ListItem>
+            {i < events.length - 1 && <Divider component="li" />}
+          </React.Fragment>
         ))}
-      </Timeline>
+      </List>
       <Card variant="outlined" sx={{ background: '#fffbe6', mt: 2 }}>
         <CardContent>
           <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1, textAlign: 'center' }}>A day to remember!</Typography>
