@@ -16,7 +16,7 @@ import MoodIcon from '@mui/icons-material/Mood';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import LightbulbIcon from '@mui/icons-material/Lightbulb';
 import CircularProgress from '@mui/material/CircularProgress';
-import { getDailySummary } from './api';
+import { getDailySummary } from '../api/summary';
 
 function formatTime(ts) {
   const d = new Date(ts);

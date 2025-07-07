@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import './App.css';
-import Onboarding from './pages/Onboarding';
+import '../App.css';
+import Onboarding from './Onboarding';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import Dashboard from './Dashboard';
 import DailySummary from './DailySummary';
@@ -47,8 +47,8 @@ function App() {
 
   // Sample data for logs and suggestions
   const [moodLogs, setMoodLogs] = useState([
-    { mood: 'Good', emoji: '🙂', note: 'Feeling productive this morning!', timestamp: new Date().setHours(9, 30) },
-    { mood: 'Okay', emoji: '😐', note: 'A bit tired after lunch.', timestamp: new Date().setHours(13, 15) },
+    { mood: 'Good', emoji: '\ud83d\ude42', note: 'Feeling productive this morning!', timestamp: new Date().setHours(9, 30) },
+    { mood: 'Okay', emoji: '\ud83d\ude10', note: 'A bit tired after lunch.', timestamp: new Date().setHours(13, 15) },
   ]);
   const [activityLogs, setActivityLogs] = useState([
     { activity: 'Work', timeSpent: 180, timestamp: new Date().setHours(9, 0) },
@@ -117,4 +117,4 @@ function App() {
   );
 }
 
-export default App;
+export default App; 

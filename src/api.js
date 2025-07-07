@@ -1,3 +1,6 @@
+// Deprecated: Use /api/*.js modules instead for API calls.
+console.warn('api.js is deprecated. Use /api/users.js, /api/moods.js, etc.');
+
 export const API_BASE = process.env.REACT_APP_API_BASE || 'https://cayk3slusd.execute-api.us-east-1.amazonaws.com/dev/api';
 
 // USERS

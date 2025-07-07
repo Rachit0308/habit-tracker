@@ -12,7 +12,8 @@ import Select from '@mui/material/Select';
 import InputLabel from '@mui/material/InputLabel';
 import FormControl from '@mui/material/FormControl';
 import Slider from '@mui/material/Slider';
-import { createActivity, API_BASE } from './api';
+import { createActivity } from '../api/activities';
+import { API_BASE } from '../api/base';
 import dayjs from 'dayjs';
 
 function getAuthHeaders() {

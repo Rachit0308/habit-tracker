@@ -10,10 +10,10 @@ import Box from '@mui/material/Box';
 import LightbulbIcon from '@mui/icons-material/Lightbulb';
 import MoodIcon from '@mui/icons-material/Mood';
 import EventNoteIcon from '@mui/icons-material/EventNote';
-import MoodModal from './MoodModal';
-import ActivityModal from './ActivityModal';
-import SuggestionModal from './SuggestionModal';
-import { getSuggestions } from './api';
+import MoodModal from '../components/MoodModal';
+import ActivityModal from '../components/ActivityModal';
+import SuggestionModal from '../components/SuggestionModal';
+import { getSuggestions } from '../api/suggestions';
 
 function Dashboard({ user, themeName, setThemeName, onShowSummary }) {
   const name = user.name || 'there';

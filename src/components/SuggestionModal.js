@@ -6,7 +6,7 @@ import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
-import { getSuggestions } from './api';
+import { getSuggestions } from '../api/suggestions';
 
 function SuggestionModal({ open, onClose, userId }) {
   const [suggestions, setSuggestions] = useState([]);

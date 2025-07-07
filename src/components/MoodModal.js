@@ -7,7 +7,8 @@ import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
-import { createMood, API_BASE } from './api';
+import { createMood } from '../api/moods';
+import { API_BASE } from '../api/base';
 
 function getAuthHeaders() {
   const token = localStorage.getItem('jwt_token');
@@ -18,11 +19,11 @@ function getAuthHeaders() {
 
 function MoodModal({ open, onClose, userId, onMoodLogged }) {
   const [moods, setMoods] = useState([
-    { label: 'Great', emoji: '😃' },
-    { label: 'Good', emoji: '🙂' },
-    { label: 'Okay', emoji: '😐' },
-    { label: 'Bad', emoji: '🙁' },
-    { label: 'Awful', emoji: '😢' },
+    { label: 'Great', emoji: '\ud83d\ude03' },
+    { label: 'Good', emoji: '\ud83d\ude42' },
+    { label: 'Okay', emoji: '\ud83d\ude10' },
+    { label: 'Bad', emoji: '\ud83d\ude41' },
+    { label: 'Awful', emoji: '\ud83d\ude22' },
   ]);
   const [selectedMood, setSelectedMood] = useState(null);
   const [note, setNote] = useState('');
